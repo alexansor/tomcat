@@ -1,0 +1,9 @@
+启动添加VM参数如下：
+-Dcatalina.home=F:/github/alexansor/tomcat/source
+-Dcatalina.base=F:/github/alexansor/tomcat/source
+-Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager
+-Djava.util.logging.config.file=F:/github/alexansor/tomcat/source/conf/logging.properties
+
+
+https://www.jianshu.com/p/7c9401b85704
+https://blog.csdn.net/qq_44377709/article/details/122652081

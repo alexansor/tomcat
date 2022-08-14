@@ -489,6 +489,7 @@ public class Http11Processor extends AbstractProcessor {
     }
 
 
+    // 处理请求
     @Override
     public SocketState service(SocketWrapperBase<?> socketWrapper)
         throws IOException {

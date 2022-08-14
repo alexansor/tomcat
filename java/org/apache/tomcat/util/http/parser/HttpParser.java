@@ -247,6 +247,7 @@ public class HttpParser {
     }
 
 
+    // TOKEN 表示不是控制符或者分隔符
     public static boolean isToken(int c) {
         // Fast for correct values, slower for incorrect ones
         try {
