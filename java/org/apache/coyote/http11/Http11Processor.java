@@ -572,6 +572,7 @@ public class Http11Processor extends AbstractProcessor {
             }
 
             // Has an upgrade been requested?
+            // 处理 upgrade 请求头，是否升级协议
             if (isConnectionToken(request.getMimeHeaders(), "upgrade")) {
                 // Check the protocol
                 String requestedProtocol = request.getHeader("Upgrade");
@@ -634,9 +635,11 @@ public class Http11Processor extends AbstractProcessor {
             }
 
             // Process the request in the adapter
+            // 通过设配器处理请求
             if (getErrorState().isIoAllowed()) {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
+                    // 这个是处理请求的重点方法
                     getAdapter().service(request, response);
                     // Handle when the response was committed before a serious
                     // error occurred.  Throwing a ServletException should both

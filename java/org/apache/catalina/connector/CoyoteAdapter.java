@@ -323,6 +323,7 @@ public class CoyoteAdapter implements Adapter {
     public void service(org.apache.coyote.Request req, org.apache.coyote.Response res)
             throws Exception {
 
+        // 这里获取到 Request 和 Response，继承自 HttpServletRequest 和 HttpServletResponse 但实际上，对外用的是 RequestFacade
         Request request = (Request) req.getNote(ADAPTER_NOTES);
         Response response = (Response) res.getNote(ADAPTER_NOTES);
 
@@ -334,6 +335,7 @@ public class CoyoteAdapter implements Adapter {
             response.setCoyoteResponse(res);
 
             // Link objects
+            // 关联请求响应对象
             request.setResponse(response);
             response.setRequest(request);
 
@@ -342,9 +344,11 @@ public class CoyoteAdapter implements Adapter {
             res.setNote(ADAPTER_NOTES, response);
 
             // Set query string encoding
+            // 设置 URI 字符集
             req.getParameters().setQueryStringCharset(connector.getURICharset());
         }
 
+        // 响应添加 X-Powered-By 头
         if (connector.getXpoweredBy()) {
             response.addHeader("X-Powered-By", POWERED_BY);
         }
@@ -575,6 +579,7 @@ public class CoyoteAdapter implements Adapter {
      * Perform the necessary processing after the HTTP headers have been parsed
      * to enable the request/response pair to be passed to the start of the
      * container pipeline for processing.
+     * 在读取 Http 请求头后添加一系列必要的处理，为了能进入到容易管道进行下一步处理
      *
      * @param req      The coyote request object
      * @param request  The catalina request object
@@ -595,6 +600,7 @@ public class CoyoteAdapter implements Adapter {
         // If the processor has set the scheme (AJP does this, HTTP does this if
         // SSL is enabled) use this to set the secure flag as well. If the
         // processor hasn't set it, use the settings from the connector
+        // 处理 scheme，如果为空则使用 connector 配置
         if (req.scheme().isNull()) {
             // Use connector scheme and secure configuration, (defaults to
             // "http" and false respectively)
@@ -607,6 +613,7 @@ public class CoyoteAdapter implements Adapter {
 
         // At this point the Host header has been processed.
         // Override if the proxyPort/proxyHost are set
+        // 设置代理
         String proxyName = connector.getProxyName();
         int proxyPort = connector.getProxyPort();
         if (proxyPort != 0) {
@@ -626,6 +633,7 @@ public class CoyoteAdapter implements Adapter {
         MessageBytes undecodedURI = req.requestURI();
 
         // Check for ping OPTIONS * request
+        // 检查 ping OPTIONS * 请求
         if (undecodedURI.equals("*")) {
             if (req.method().equalsIgnoreCase("OPTIONS")) {
                 StringBuilder allow = new StringBuilder();
@@ -647,13 +655,20 @@ public class CoyoteAdapter implements Adapter {
 
         if (undecodedURI.getType() == MessageBytes.T_BYTES) {
             // Copy the raw URI to the decodedURI
+            // 将请求的 uri 复制一份到 decodeURI 中，下面要进行解析
             decodedURI.duplicate(undecodedURI);
 
             // Parse (and strip out) the path parameters
+            // 解析路径参数
             parsePathParameters(req, request);
 
             // URI decoding
             // %xx decoding of the URL
+            // 处理 URI 中包含 %2F 的问题
+            // 默认情况下，tomcat 等服务器是拒绝 uri 中带 %2F 或 %5C 的 uri 的，因为他们在解析后是 / 或 \
+            // 可以通过添加配置来允许带这些特殊字符的请求
+            // 允许 / 设置 org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH
+            // 允许 \ 设置 org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH
             try {
                 req.getURLDecoder().convert(decodedURI.getByteChunk(), connector.getEncodedSolidusHandlingInternal());
             } catch (IOException ioe) {
@@ -689,6 +704,7 @@ public class CoyoteAdapter implements Adapter {
         }
 
         // Request mapping.
+        // 请求映射，获取对应的主机信息
         MessageBytes serverName;
         if (connector.getUseIPVHosts()) {
             serverName = req.localName();
@@ -735,11 +751,13 @@ public class CoyoteAdapter implements Adapter {
             // Now we have the context, we can parse the session ID from the URL
             // (if any). Need to do this before we redirect in case we need to
             // include the session id in the redirect
+            // 处理 session 追踪模式，如果使用了 URI 模式，则从路径参数里面获取 sessionID
             String sessionID;
             if (request.getServletContext().getEffectiveSessionTrackingModes()
                     .contains(SessionTrackingMode.URL)) {
 
                 // Get the session ID if there was one
+                // 获取 sessionCookieName 配置的 sessionKey 名，如果是空，则使用默认值 jsessionid
                 sessionID = request.getPathParameter(
                         SessionConfig.getSessionUriParamName(
                                 request.getContext()));
@@ -750,6 +768,7 @@ public class CoyoteAdapter implements Adapter {
             }
 
             // Look for session ID in cookies and SSL session
+            // 解析 cookie 中的 sessionID
             try {
                 parseSessionCookiesId(request);
             } catch (IllegalArgumentException e) {
@@ -760,6 +779,7 @@ public class CoyoteAdapter implements Adapter {
                 }
                 return true;
             }
+            // 解析 SSL sessionID
             parseSessionSslId(request);
 
             sessionID = request.getRequestedSessionId();
@@ -868,19 +888,27 @@ public class CoyoteAdapter implements Adapter {
             return true;
         }
 
+        // 请求用户认证
         doConnectorAuthenticationAuthorization(req, request);
 
         return true;
     }
 
 
+    /**
+     * 连接认证授权
+     * @param req
+     * @param request
+     */
     private void doConnectorAuthenticationAuthorization(org.apache.coyote.Request req, Request request) {
         // Set the remote principal
+        // 获取用户信息
         String username = req.getRemoteUser().toString();
         if (username != null) {
             if (log.isDebugEnabled()) {
                 log.debug(sm.getString("coyoteAdapter.authenticate", username));
             }
+            // 如果需要认证，则调用 realm 进行认证
             if (req.getRemoteUserNeedsAuthorization()) {
                 Authenticator authenticator = request.getContext().getAuthenticator();
                 if (!(authenticator instanceof AuthenticatorBase)) {
@@ -899,6 +927,7 @@ public class CoyoteAdapter implements Adapter {
             } else {
                 // The connector isn't configured for authorization. Create a
                 // user without any roles using the supplied user name.
+                // 不需要认证则创建一个简单的 CoyotePrincipal
                 request.setUserPrincipal(new CoyotePrincipal(username));
             }
         }
@@ -912,6 +941,7 @@ public class CoyoteAdapter implements Adapter {
 
 
     /**
+     * 处理路径变量 PathParameter
      * Extract the path parameters from the request. This assumes parameters are
      * of the form /path;name=value;name2=value2/ etc. Currently only really
      * interested in the session ID that will be in this form. Other parameters
@@ -926,6 +956,7 @@ public class CoyoteAdapter implements Adapter {
         // Process in bytes (this is default format so this is normally a NO-OP
         req.decodedURI().toBytes();
 
+        // uriBytes 是这样的 /path;name=value;name2=value2/
         ByteChunk uriBC = req.decodedURI().getByteChunk();
         int semicolon = uriBC.indexOf(';', 0);
         // Performance optimisation. Return as soon as it is known there are no
@@ -952,6 +983,7 @@ public class CoyoteAdapter implements Adapter {
             int end = uriBC.getEnd();
 
             int pathParamStart = semicolon + 1;
+            // 找到 ; 和 / 的下标，用户截取 k=v 子字符串
             int pathParamEnd = ByteChunk.findBytes(uriBC.getBuffer(),
                     start + pathParamStart, end,
                     new byte[] {';', '/'});
@@ -964,6 +996,7 @@ public class CoyoteAdapter implements Adapter {
                                 pathParamEnd - pathParamStart, charset);
                 }
                 // Extract path param from decoded request URI
+                // 复制 kv 值
                 byte[] buf = uriBC.getBuffer();
                 for (int i = 0; i < end - start - pathParamEnd; i++) {
                     buf[start + semicolon + i]
@@ -987,6 +1020,7 @@ public class CoyoteAdapter implements Adapter {
                 log.debug(sm.getString("coyoteAdapter.debug", "pv", pv));
             }
 
+            // 添加 PathParameter
             if (pv != null) {
                 int equals = pv.indexOf('=');
                 if (equals > -1) {
@@ -1041,6 +1075,7 @@ public class CoyoteAdapter implements Adapter {
         // from a parent context with a session ID may be present which would
         // overwrite the valid session ID encoded in the URL
         Context context = request.getMappingData().context;
+        // 如果不支持 cookie session，则直接返回
         if (context != null && !context.getServletContext()
                 .getEffectiveSessionTrackingModes().contains(
                         SessionTrackingMode.COOKIE)) {
@@ -1048,6 +1083,7 @@ public class CoyoteAdapter implements Adapter {
         }
 
         // Parse session id from cookies
+        // 解析并获取 cookies，这里应该是 requestCookies，而不是 serverCookies，这命名好像有点问题
         ServerCookies serverCookies = request.getServerCookies();
         int count = serverCookies.getCookieCount();
         if (count <= 0) {
@@ -1056,6 +1092,7 @@ public class CoyoteAdapter implements Adapter {
 
         String sessionCookieName = SessionConfig.getSessionCookieName(context);
 
+        // 遍历，拿到并设置 sessionID 的值
         for (int i = 0; i < count; i++) {
             ServerCookie scookie = serverCookies.getCookie(i);
             if (scookie.getName().equals(sessionCookieName)) {

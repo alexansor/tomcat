@@ -3186,14 +3186,18 @@ public class Request implements HttpServletRequest {
      * ServerCookies structure. It does not populate the Cookie objects.
      */
     protected void parseCookies() {
+        // 如果已经解析过，则直接返回
         if (cookiesParsed) {
             return;
         }
 
         cookiesParsed = true;
 
+        // 这里应该是请求的 cookies，不是服务的cookies，默认初始化大小为4个
         ServerCookies serverCookies = coyoteRequest.getCookies();
+        // 设置 cookie 最大个数
         serverCookies.setLimit(connector.getMaxCookieCount());
+        // 获取 cookie 处理器，并解析请求带过来的 cookie 信息
         CookieProcessor cookieProcessor = getContext().getCookieProcessor();
         cookieProcessor.parseCookieHeader(coyoteRequest.getMimeHeaders(), serverCookies);
     }
