@@ -67,6 +67,9 @@ public class StandardHost extends ContainerBase implements Host {
     public StandardHost() {
 
         super();
+        // 设置 StandardHost 基本 valve
+        // 注意这里是设置 basic 的，不是设置 pipeline 链的
+        // basic 其实可以认为是最后一个，在 pipeline 结束后执行
         pipeline.setBasic(new StandardHostValve());
 
     }

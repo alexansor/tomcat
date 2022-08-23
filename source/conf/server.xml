@@ -150,7 +150,7 @@
 
       <Host name="localhost"  appBase="webapps"
             unpackWARs="true" autoDeploy="true">
-        <Context docBase="F:/github/alexansor/study-servlet/target/sutdy-servlet-1.0-SNAPSHOT" path="/study-servlet" reloadable="true"></Context>
+<!--        <Context docBase="F:/github/alexansor/study-servlet/target/sutdy-servlet-1.0-SNAPSHOT" path="/study-servlet" reloadable="true"></Context>-->
 
         <!-- SingleSignOn valve, share authentication between web applications
              Documentation at: /docs/config/valve.html -->

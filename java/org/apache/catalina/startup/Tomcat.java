@@ -648,6 +648,7 @@ public class Tomcat {
         ctx.setName(contextName);
         ctx.setPath(contextPath);
         ctx.setDocBase(dir);
+        // 添加认证管理器生命周期
         ctx.addLifecycleListener(new FixContextListener());
 
         if (host == null) {
@@ -1126,6 +1127,7 @@ public class Tomcat {
      * <p>
      * The start() method in context will set 'configured' to false - and
      * expects a listener to set it back to true.
+     * 修复没有使用 web.xml 配置文件导致的 Authenticator 为空问题
      */
     public static class FixContextListener implements LifecycleListener {
 

@@ -363,14 +363,17 @@ public class CoyoteAdapter implements Adapter {
             // Parse and set Catalina and configuration specific
             // request parameters
             postParseSuccess = postParseRequest(req, request, res, response);
+            // 如果解析通过，则进入一系列的 valve 实现 servlet 的主要功能
             if (postParseSuccess) {
                 //check valves if we support async
                 request.setAsyncSupported(
                         connector.getService().getContainer().getPipeline().isAsyncSupported());
                 // Calling the container
+                // 这个是重点，调用容器 Connector -> StandardService -> StandardEngine -> StandardPipeline -> StandardEngineValve
                 connector.getService().getContainer().getPipeline().getFirst().invoke(
                         request, response);
             }
+            // 执行完毕后，如果是同步请求，则调用 ReadListener 回调进行响应处理
             if (request.isAsync()) {
                 async = true;
                 ReadListener readListener = req.getReadListener();

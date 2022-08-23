@@ -74,6 +74,7 @@ final class StandardContextValve extends ValveBase {
         }
 
         // Select the Wrapper to be used for this Request
+        // 拿到 StandardWrapper，执行调用链
         Wrapper wrapper = request.getWrapper();
         if (wrapper == null || wrapper.isUnavailable()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);

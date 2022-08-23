@@ -172,6 +172,7 @@ public final class ApplicationFilterChain implements FilterChain {
         throws IOException, ServletException {
 
         // Call the next filter if there is one
+        // 循环调用过滤器的 doFilter 方法
         if (pos < n) {
             ApplicationFilterConfig filterConfig = filters[pos++];
             try {
@@ -187,9 +188,11 @@ public final class ApplicationFilterChain implements FilterChain {
                     Principal principal =
                         ((HttpServletRequest) req).getUserPrincipal();
 
+                    // 调用 doFilter
                     Object[] args = new Object[]{req, res, this};
                     SecurityUtil.doAsPrivilege ("doFilter", filter, classType, args, principal);
                 } else {
+                    // 调用 doFilter
                     filter.doFilter(request, response, this);
                 }
             } catch (IOException | ServletException | RuntimeException e) {

@@ -77,6 +77,8 @@ final class StandardWrapperValve extends ValveBase {
      * Invoke the servlet we are managing, respecting the rules regarding
      * servlet lifecycle and SingleThreadModel support.
      *
+     * wrapper 里面开始处理我们熟悉的请求了，包括执行过滤器等等
+     *
      * @param request Request to be processed
      * @param response Response to be produced
      *
@@ -98,6 +100,7 @@ final class StandardWrapperValve extends ValveBase {
         Context context = (Context) wrapper.getParent();
 
         // Check for the application being marked unavailable
+        // 检查 context 的状态，不可见则返回 503
         if (!context.getState().isAvailable()) {
             response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE,
                            sm.getString("standardContext.isUnavailable"));
@@ -105,6 +108,7 @@ final class StandardWrapperValve extends ValveBase {
         }
 
         // Check for the servlet being marked unavailable
+        // 检查 servlet 是否被标记为不可见
         if (!unavailable && wrapper.isUnavailable()) {
             container.getLogger().info(sm.getString("standardWrapper.isUnavailable",
                     wrapper.getName()));
@@ -124,6 +128,8 @@ final class StandardWrapperValve extends ValveBase {
 
         // Allocate a servlet instance to process this request
         try {
+            // 这里进行 servlet 实例分配
+            // 默认情况下 singleThreadModel=false，所以没请请求都会创建一个新的 servlet 实例，也就是所谓的原型模式
             if (!unavailable) {
                 servlet = wrapper.allocate();
             }
@@ -165,6 +171,7 @@ final class StandardWrapperValve extends ValveBase {
         request.setAttribute(Globals.DISPATCHER_REQUEST_PATH_ATTR,
                 requestPathMB);
         // Create the filter chain for this request
+        // 创建过滤器链，注意入参里面有 servlet，所以 servlet 可能会被放到 chain 里面，这样外面就看不到单独调用 servlet 的 service() 方法了
         ApplicationFilterChain filterChain =
                 ApplicationFilterFactory.createFilterChain(request, wrapper, servlet);
 
@@ -252,11 +259,13 @@ final class StandardWrapperValve extends ValveBase {
             exception(request, response, e);
         } finally {
             // Release the filter chain (if any) for this request
+            // 释放过滤器
             if (filterChain != null) {
                 filterChain.release();
             }
 
             // Deallocate the allocated servlet instance
+            // 释放 servlet
             try {
                 if (servlet != null) {
                     wrapper.deallocate(servlet);

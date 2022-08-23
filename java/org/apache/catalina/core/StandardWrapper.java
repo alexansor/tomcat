@@ -758,6 +758,7 @@ public class StandardWrapper extends ContainerBase
      * <code>SingleThreadModel</code>, the Wrapper implementation must ensure
      * that this instance is not allocated again until it is deallocated by a
      * call to <code>deallocate()</code>.
+     * 实例化 servlet 实例，内部会有一个 instancePool 池，来对 servlet 对象进行管理
      *
      * @exception ServletException if the servlet init() method threw
      *  an exception
@@ -774,6 +775,7 @@ public class StandardWrapper extends ContainerBase
         boolean newInstance = false;
 
         // If not SingleThreadedModel, return the same instance every time
+        // 如果不是单例模式
         if (!singleThreadModel) {
             // Load and initialize our instance if necessary
             if (instance == null || !instanceInitialized) {

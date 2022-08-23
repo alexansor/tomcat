@@ -100,7 +100,9 @@ final class StandardHostValve extends ValveBase {
         throws IOException, ServletException {
 
         // Select the Context to be used for this Request
+        // Host 下一步就是找到对应的 Context，然后执行对应的 valve
         Context context = request.getContext();
+        // context 为空，返回 404
         if (context == null) {
             // Don't overwrite an existing error
             if (!response.isError()) {
@@ -109,6 +111,7 @@ final class StandardHostValve extends ValveBase {
             return;
         }
 
+        // 设置是否同步
         if (request.isAsyncSupported()) {
             request.setAsyncSupported(context.getPipeline().isAsyncSupported());
         }
@@ -116,6 +119,7 @@ final class StandardHostValve extends ValveBase {
         boolean asyncAtStart = request.isAsync();
 
         try {
+            // 是否启用了 securityManager
             context.bind(Globals.IS_SECURITY_ENABLED, MY_CLASSLOADER);
 
             if (!asyncAtStart && !context.fireRequestInitEvent(request.getRequest())) {
@@ -131,6 +135,9 @@ final class StandardHostValve extends ValveBase {
             // application defined error pages so DO NOT forward them to the the
             // application for processing.
             try {
+                // 判断前面是否已经出现了错误，如果没有，进入 context 的 valve 进行处理
+                // 注意 context pipeline 的第一个 valve 是 NonLoginAuthenticator[AuthenticatorBase]，在创建 context 是通过声明周期方法添加的
+                // org.apache.catalina.startup.Tomcat.addContext(org.apache.catalina.Host, java.lang.String, java.lang.String, java.lang.String)
                 if (!response.isErrorReportRequired()) {
                     context.getPipeline().getFirst().invoke(request, response);
                 }
