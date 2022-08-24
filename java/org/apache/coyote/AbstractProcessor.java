@@ -378,9 +378,11 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
         switch (actionCode) {
         // 'Normal' servlet support
         case COMMIT: {
+            // 提交响应
             if (!response.isCommitted()) {
                 try {
                     // Validate and write response headers
+                    // 准备响应内容
                     prepareResponse();
                 } catch (IOException e) {
                     handleIOException(e);

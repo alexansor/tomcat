@@ -268,6 +268,7 @@ final class StandardWrapperValve extends ValveBase {
             // 释放 servlet
             try {
                 if (servlet != null) {
+                    // 释放 servlet，并不一定是直接删除对象，而是将对象放置到 servletPool 中，方便后面使用
                     wrapper.deallocate(servlet);
                 }
             } catch (Throwable e) {

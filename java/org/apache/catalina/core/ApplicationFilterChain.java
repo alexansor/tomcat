@@ -206,6 +206,7 @@ public final class ApplicationFilterChain implements FilterChain {
         }
 
         // We fell off the end of the chain -- call the servlet instance
+        // 在 filterChain 结束之后，执行 servlet 的 service 方法
         try {
             if (ApplicationDispatcher.WRAP_SAME_OBJECT) {
                 lastServicedRequest.set(request);
@@ -299,6 +300,7 @@ public final class ApplicationFilterChain implements FilterChain {
 
     /**
      * Release references to the filters and wrapper executed by this chain.
+     * 释放过滤器链
      */
     void release() {
         for (int i = 0; i < n; i++) {

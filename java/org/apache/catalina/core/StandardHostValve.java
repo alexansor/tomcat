@@ -155,12 +155,14 @@ final class StandardHostValve extends ValveBase {
             // Now that the request/response pair is back under container
             // control lift the suspension so that the error handling can
             // complete and/or the container can flush any remaining data
+            // 设置 suspended 的状态为 false
             response.setSuspended(false);
 
             Throwable t = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
 
             // Protect against NPEs if the context was destroyed during a
             // long running request.
+            // 这里为啥还需要再次检验 context 服务的状态呢
             if (!context.getState().isAvailable()) {
                 return;
             }
@@ -190,6 +192,7 @@ final class StandardHostValve extends ValveBase {
                 request.getSession(false);
             }
 
+            // context 解除绑定，这个暂时不知道是干嘛的
             context.unbind(Globals.IS_SECURITY_ENABLED, MY_CLASSLOADER);
         }
     }

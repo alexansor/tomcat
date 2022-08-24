@@ -367,6 +367,7 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
     @SuppressWarnings("deprecation")
     public void sendStatus() {
         // Write protocol name
+        // 先写协议名字，再空格，后状态，接着回车换行
         write(Constants.HTTP_11_BYTES);
         headerBuffer.put(Constants.SP);
 

@@ -639,7 +639,7 @@ public class Http11Processor extends AbstractProcessor {
             if (getErrorState().isIoAllowed()) {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
-                    // 这个是处理请求的重点方法
+                    // 这个是处理请求的重点方法，里面会通过 connector -> service -> engine -> host -> servlet 等一个个组件进行处理
                     getAdapter().service(request, response);
                     // Handle when the response was committed before a serious
                     // error occurred.  Throwing a ServletException should both
@@ -675,7 +675,9 @@ public class Http11Processor extends AbstractProcessor {
             }
 
             // Finish the handling of the request
+            // 结束处理请求输入
             rp.setStage(org.apache.coyote.Constants.STAGE_ENDINPUT);
+            // 如果不是同步请求
             if (!isAsync()) {
                 // If this is an async request then the request ends when it has
                 // been completed. The AsyncContext is responsible for calling
@@ -1296,9 +1298,13 @@ public class Http11Processor extends AbstractProcessor {
         }
 
         // Build the response header
+        // 开始响应 headers 信息
         try {
+            // 写响应行，比如
+            // HTTP/1.1 200 OK
             outputBuffer.sendStatus();
 
+            // 循环写响应头
             int size = headers.size();
             for (int i = 0; i < size; i++) {
                 outputBuffer.sendHeader(headers.getName(i), headers.getValue(i));

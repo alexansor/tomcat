@@ -402,6 +402,7 @@ public class CoyoteAdapter implements Adapter {
                 }
             } else {
                 request.finishRequest();
+                // 这一步写相应
                 response.finishResponse();
             }
 

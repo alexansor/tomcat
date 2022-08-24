@@ -249,9 +249,11 @@ public class OutputBuffer extends Writer {
         // If there are chars, flush all of them to the byte buffer now as bytes are used to
         // calculate the content-length (if everything fits into the byte buffer, of course).
         if (cb.remaining() > 0) {
+            // 刷新 char buffer 写响应
             flushCharBuffer();
         }
 
+        // 这里是处理 HEAD 请求的，暂时还不清楚是干嘛用的
         if ((!coyoteResponse.isCommitted()) && (coyoteResponse.getContentLengthLong() == -1)
                 && !coyoteResponse.getRequest().method().equals("HEAD")) {
             // If this didn't cause a commit of the response, the final content
@@ -264,6 +266,7 @@ public class OutputBuffer extends Writer {
             }
         }
 
+        // 是否因为 upgrade 导致需要切换协议
         if (coyoteResponse.getStatus() == HttpServletResponse.SC_SWITCHING_PROTOCOLS) {
             doFlush(true);
         } else {
@@ -274,9 +277,11 @@ public class OutputBuffer extends Writer {
         // The request should have been completely read by the time the response
         // is closed. Further reads of the input a) are pointless and b) really
         // confuse AJP (bug 50189) so close the input buffer to prevent them.
+        // 关闭输入请求
         Request req = (Request) coyoteResponse.getRequest().getNote(CoyoteAdapter.ADAPTER_NOTES);
         req.inputBuffer.close();
 
+        // 关闭，执行 action hook
         coyoteResponse.action(ActionCode.CLOSE, null);
     }
 
@@ -306,10 +311,12 @@ public class OutputBuffer extends Writer {
 
         try {
             doFlush = true;
+            // 写请求头
             if (initial) {
                 coyoteResponse.sendHeaders();
                 initial = false;
             }
+            // 写请求体
             if (cb.remaining() > 0) {
                 flushCharBuffer();
             }
@@ -321,6 +328,7 @@ public class OutputBuffer extends Writer {
         }
 
         if (realFlush) {
+            // 执行 ActionCode.CLIENT_FLUSH 操作
             coyoteResponse.action(ActionCode.CLIENT_FLUSH, null);
             // If some exception occurred earlier, or if some IOE occurred
             // here, notify the servlet with an IOE
@@ -455,6 +463,7 @@ public class OutputBuffer extends Writer {
 
     /**
      * Convert the chars to bytes, then send the data to the client.
+     * 执行真实的写出操作
      *
      * @param from Char buffer to be written to the response
      *
