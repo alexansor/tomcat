@@ -702,10 +702,13 @@ public abstract class SocketWrapperBase<E> {
      *
      * @param block <code>true</code> if a blocking write should be used,
      *                  otherwise a non-blocking write will be used
+     *              是否使用阻塞写出
      *
      * @return <code>true</code> if data remains to be flushed after this method
      *         completes, otherwise <code>false</code>. In blocking mode
      *         therefore, the return value should always be <code>false</code>
+     *         true 表示写出后，data 还设有数据
+     *         false 表示全部写完了，在阻塞模式（blocking）下，这个值只会返回 false
      *
      * @throws IOException If an IO error occurs during the write
      */

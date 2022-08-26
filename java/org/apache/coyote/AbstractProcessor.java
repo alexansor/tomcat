@@ -72,6 +72,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
 
     /**
      * Error state for the request/response currently being processed.
+     * 默认情况下，errorStatus 是 NONE，如果处理过程出现错误，则会修改为对应的错误
      */
     private ErrorState errorState = ErrorState.NONE;
 
@@ -377,6 +378,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
     public final void action(ActionCode actionCode, Object param) {
         switch (actionCode) {
         // 'Normal' servlet support
+        // 处理正常 action 操作
         case COMMIT: {
             // 提交响应
             if (!response.isCommitted()) {

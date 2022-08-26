@@ -1196,6 +1196,7 @@ public class Http11Processor extends AbstractProcessor {
 
         long contentLength = response.getContentLengthLong();
         boolean connectionClosePresent = isConnectionToken(headers, Constants.CLOSE);
+        // tomcat 处理分块是在这里进行处理的，如果 contentType 指定，则不分块，否则满足条件即进行分块
         if (contentLength != -1) {
             headers.setValue("Content-Length").setLong(contentLength);
             outputBuffer.addActiveFilter(outputFilters[Constants.IDENTITY_FILTER]);
@@ -1203,6 +1204,7 @@ public class Http11Processor extends AbstractProcessor {
         } else {
             // If the response code supports an entity body and we're on
             // HTTP 1.1 then we chunk unless we have a Connection: close header
+            // 满足下面条件，对响应进行分块处理
             if (http11 && entityBody && !connectionClosePresent) {
                 outputBuffer.addActiveFilter(outputFilters[Constants.CHUNKED_FILTER]);
                 contentDelimitation = true;
@@ -1434,6 +1436,7 @@ public class Http11Processor extends AbstractProcessor {
         // Finish the handling of the request
         if (getErrorState().isIoAllowed()) {
             try {
+                // 结束请求体
                 inputBuffer.endRequest();
             } catch (IOException e) {
                 setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);
@@ -1449,7 +1452,9 @@ public class Http11Processor extends AbstractProcessor {
         }
         if (getErrorState().isIoAllowed()) {
             try {
+                // 提交 commit 操作，校验并写出响应行、响应头信息
                 action(ActionCode.COMMIT, null);
+                // 写出响应体，刷新
                 outputBuffer.end();
             } catch (IOException e) {
                 setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);

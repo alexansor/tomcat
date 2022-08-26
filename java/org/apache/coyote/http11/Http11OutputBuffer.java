@@ -260,16 +260,20 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
 
     @Override
     public void end() throws IOException {
+        // 如果响应已经结束，直接返回
         if (responseFinished) {
             return;
         }
 
         if (lastActiveFilter == -1) {
+            // 默认 outputStreamOutputBuffer 的值是 SocketOutputBuffer
             outputStreamOutputBuffer.end();
         } else {
+            // 如果 lastActiveFilter 的值不是 -1，表示被指定了最后处理的拦截器，可能是进行 compress 处理等
             activeFilters[lastActiveFilter].end();
         }
 
+        // 设置 responseFinished 为 true 表示响应已经结束
         responseFinished = true;
     }
 
@@ -648,6 +652,7 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
 
         @Override
         public void end() throws IOException {
+            // 刷新，写出响应
             socketWrapper.flush(true);
         }
 

@@ -77,6 +77,8 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
 
     /**
      * Swallow input ? (in the case of an expectation)
+     * 这个标识现在暂时不知道是干嘛用的，swallow 的意思是吞，在这里可能是能否继续读取的意思吧
+     * 如果出现错误，他的值会被改为 false
      */
     private boolean swallowInput;
 
