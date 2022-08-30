@@ -597,6 +597,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
 
         /**
          * Processes events in the event queue of the Poller.
+         * 处理 Poller 的事件
          *
          * @return <code>true</code> if some events were processed,
          *   <code>false</code> if queue was empty
@@ -611,17 +612,21 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                 SocketChannel sc = socketWrapper.getSocket().getIOChannel();
                 int interestOps = pe.getInterestOps();
                 if (sc == null) {
+                    // 如果 SocketChannel 为空，则关闭 socketWrapper
                     log.warn(sm.getString("endpoint.nio.nullSocketChannel"));
                     socketWrapper.close();
                 } else if (interestOps == OP_REGISTER) {
+                    // 如果是注册事件，则向 socketChannel 注册 OP_READ 事件
                     try {
                         sc.register(getSelector(), SelectionKey.OP_READ, socketWrapper);
                     } catch (Exception x) {
                         log.error(sm.getString("endpoint.nio.registerFail"), x);
                     }
                 } else {
+                    // 获取 selector 对于这个 socket 的监听事件
                     final SelectionKey key = sc.keyFor(getSelector());
                     if (key == null) {
+                        // 如果为空，关闭这个 socket
                         // The key was cancelled (e.g. due to socket closure)
                         // and removed from the selector while it was being
                         // processed. Count down the connections at this point
@@ -629,6 +634,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                         // closed.
                         socketWrapper.close();
                     } else {
+                        // 注册新事件
                         final NioSocketWrapper attachment = (NioSocketWrapper) key.attachment();
                         if (attachment != null) {
                             // We are registering the key to start with, reset the fairness counter.
@@ -644,6 +650,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                         }
                     }
                 }
+                // 将 pe 重置后缓存起来，下次继续使用
                 if (running && eventCache != null) {
                     pe.reset();
                     eventCache.push(pe);
@@ -706,6 +713,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                 try {
                     if (!close) {
                         hasEvents = events();
+                        // 如果 wakeupCounter 大于0，则不阻塞直接获取，否则阻塞 1s
                         if (wakeupCounter.getAndSet(-1) > 0) {
                             // If we are here, means we have other stuff to do
                             // Do a non blocking select
@@ -713,6 +721,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                         } else {
                             keyCount = selector.select(selectorTimeout);
                         }
+                        // 这里设置为 0 是为了后面可以继续进入到阻塞 select 里面
                         wakeupCounter.set(0);
                     }
                     if (close) {
@@ -726,6 +735,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                         break;
                     }
                     // Either we timed out or we woke up, process events first
+                    // 如果前面没有获取到 key,那么再执行一遍 events 方法看有没有就绪的事件
                     if (keyCount == 0) {
                         hasEvents = (hasEvents | events());
                     }
@@ -735,6 +745,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                     continue;
                 }
 
+                // 遍历处理
                 Iterator<SelectionKey> iterator =
                     keyCount > 0 ? selector.selectedKeys().iterator() : null;
                 // Walk through the collection of ready keys and dispatch
@@ -746,11 +757,13 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                     // Attachment may be null if another thread has called
                     // cancelledKey()
                     if (socketWrapper != null) {
+                        // 处理事件
                         processKey(sk, socketWrapper);
                     }
                 }
 
                 // Process timeouts
+                // 处理超时事件
                 timeout(keyCount,hasEvents);
             }
 
@@ -766,10 +779,12 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                         if (socketWrapper.getSendfileData() != null) {
                             processSendfile(sk, socketWrapper, false);
                         } else {
+                            // 将就绪的方法解除注册，避免多个线程进行处理
                             unreg(sk, socketWrapper, sk.readyOps());
                             boolean closeSocket = false;
                             // Read goes before write
                             if (sk.isReadable()) {
+                                // 处理读操作
                                 if (socketWrapper.readOperation != null) {
                                     if (!socketWrapper.readOperation.process()) {
                                         closeSocket = true;
@@ -784,6 +799,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                                 }
                             }
                             if (!closeSocket && sk.isWritable()) {
+                                // 处理写操作
                                 if (socketWrapper.writeOperation != null) {
                                     if (!socketWrapper.writeOperation.process()) {
                                         closeSocket = true;
