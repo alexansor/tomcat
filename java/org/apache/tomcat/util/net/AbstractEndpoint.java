@@ -990,6 +990,9 @@ public abstract class AbstractEndpoint<S,U> {
     }
 
 
+    /**
+     * 创建线程池
+     */
     public void createExecutor() {
         internalExecutor = true;
         TaskQueue taskqueue = new TaskQueue();
